@@ -1,0 +1,95 @@
+const courses = [
+  {
+    courseTitle: "Digital Logic Design",
+    description:
+      "This course covers the basics of digital logic circuits and systems. It includes Boolean algebra, combinational and sequential logic, and introduces digital systems design using hardware description languages (HDL).",
+    lecturer: "Dr. Sarah Okello",
+    creditUnits: 3,
+    unitCode: "CENG101",
+    semester: "1st Semester",
+    level: "Year 1",
+    assessment: "Assignments, Midterm Exam, Final Exam",
+    prerequisites: null,
+    deliveryMode: "Lectures, Lab Practicals",
+  },
+  {
+    courseTitle: "Microprocessor Systems",
+    description:
+      "This course provides in-depth knowledge of microprocessor architecture, programming, and interfacing. Students will learn assembly language and use microcontrollers in practical applications.",
+    lecturer: "Prof. John Wamala",
+    creditUnits: 4,
+    unitCode: "CENG202",
+    semester: "2nd Semester",
+    level: "Year 2",
+    assessment: "Lab Assignments, Project, Final Exam",
+    prerequisites: "Digital Logic Design",
+    deliveryMode: "Lectures, Lab Practicals",
+  },
+  {
+    courseTitle: "Signals and Systems",
+    description:
+      "This course introduces continuous and discrete-time signals and systems, Fourier analysis, and transforms. It is fundamental for understanding communications and control systems.",
+    lecturer: "Dr. Grace Kintu",
+    creditUnits: 3,
+    unitCode: "CENG203",
+    semester: "2nd Semester",
+    level: "Year 2",
+    assessment: "Homework, Quizzes, Final Exam",
+    prerequisites: "Calculus, Linear Algebra",
+    deliveryMode: "Lectures, Tutorials",
+  },
+  {
+    courseTitle: "Computer Networks",
+    description:
+      "This course covers the fundamental principles of computer networking, including the OSI model, TCP/IP protocols, and network hardware. Students will learn how to design and manage networks.",
+    lecturer: "Mr. Robert Ndawula",
+    creditUnits: 3,
+    unitCode: "CENG304",
+    semester: "1st Semester",
+    level: "Year 3",
+    assessment: "Group Project, Lab Work, Final Exam",
+    prerequisites: "Data Communications",
+    deliveryMode: "Lectures, Lab Practicals",
+  },
+  {
+    courseTitle: "Embedded Systems",
+    description:
+      "The course focuses on the development and deployment of embedded systems using microcontrollers and real-time operating systems. Students will learn about system design, programming, and hardware interfacing.",
+    lecturer: "Dr. Sandra Tendo",
+    creditUnits: 4,
+    unitCode: "CENG305",
+    semester: "1st Semester",
+    level: "Year 3",
+    assessment: "Lab Projects, Midterm Exam, Final Exam",
+    prerequisites: "Microprocessor Systems",
+    deliveryMode: "Lectures, Lab Practicals",
+  },
+  {
+    courseTitle: "Software Engineering",
+    description:
+      "This course introduces software engineering principles, including software development life cycles, methodologies, requirements analysis, design, testing, and maintenance of software systems.",
+    lecturer: "Mr. Andrew Kalungi",
+    creditUnits: 3,
+    unitCode: "CENG401",
+    semester: "1st Semester",
+    level: "Year 4",
+    assessment: "Team Project, Assignments, Final Exam",
+    prerequisites: "Programming Fundamentals",
+    deliveryMode: "Lectures, Project Work",
+  },
+  {
+    courseTitle: "Artificial Intelligence",
+    description:
+      "An introduction to artificial intelligence techniques including machine learning, neural networks, natural language processing, and computer vision. Students will develop AI-based solutions for real-world problems.",
+    lecturer: "Dr. Pauline Nakitende",
+    creditUnits: 3,
+    unitCode: "CENG402",
+    semester: "2nd Semester",
+    level: "Year 4",
+    assessment: "Research Paper, Projects, Final Exam",
+    prerequisites: "Algorithms and Data Structures",
+    deliveryMode: "Lectures, Practical Sessions",
+  },
+];
+
+export default courses;

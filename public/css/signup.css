@@ -1,0 +1,72 @@
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css");
+@import url("https://fonts.googleapis.com/css2?family=Asap&display=swap");
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Asap", sans serif;
+  line-height: 1.5;
+  font-size: 1rem;
+  background-color: #e4e9fd;
+  background-image: -webkit-linear-gradient(65deg, #f2ead3 50%, #dfd7bf 50%);
+}
+h2 {
+  font-size: 2rem;
+}
+
+.signup-box {
+  background-color: #ffffff;
+  height: 90vh;
+  position: relative;
+  width: 350px;
+}
+
+.signup-box.hide {
+  display: none;
+  opacity: 0;
+  transform: translateX(-100%);
+}
+
+.signup-box .user-box {
+  position: relative;
+}
+
+input {
+  width: 100%;
+  outline: none;
+  border: none;
+  border-bottom: 1px solid #303030;
+  background: transparent;
+  color: #303030;
+  margin-bottom: 2rem;
+  font-size: 1.25rem;
+  padding: 0.5em;
+}
+
+label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0.5em 0;
+  pointer-events: none;
+  transition: 0.5s;
+}
+
+input:focus ~ label,
+input:valid ~ label {
+  top: -1.25rem;
+  left: 0;
+  font-size: 0.75rem;
+}
+
+/* media query */
+
+@media screen and (max-width: 600px) {
+  .signup-box {
+    width: 100%;
+    background-color: transparent !important;
+    border-radius: none !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+}
