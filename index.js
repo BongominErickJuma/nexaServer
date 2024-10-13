@@ -8,6 +8,7 @@ import timetable_app from "./classes/timetable/timetable.js";
 import course_app from "./resources/courses/courses.js";
 import course_assignments_app from "./resources/assignments/assignments.js";
 import answers_app from "./resources/answers/answers.js";
+import notes_app from "./resources/notes/notes.js";
 
 // configure express
 const app = express();
@@ -44,6 +45,9 @@ app.use(course_assignments_app);
 
 // answers routes
 app.use(answers_app);
+
+// notes routes
+app.use(notes_app);
 
 app.listen(port, () => {
   console.log(`listening on ${port}`);
