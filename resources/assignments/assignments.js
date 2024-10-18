@@ -1,6 +1,8 @@
 import express from "express";
 import bodyParser from "body-parser";
-import courseAssignments from "../assignments.js"; // assuming you export your assignments array
+import { getResources } from "../../database/dbfunctions.js";
+import db from "../../database/connect.js";
+// import courseAssignments from "../assignments.js";
 
 const course_assignments_app = express.Router();
 
@@ -10,108 +12,97 @@ course_assignments_app.use(bodyParser.json());
 // ASSIGNMENTS
 
 // Get all assignments
-course_assignments_app.get("/course_assignments", (req, res) => {
+course_assignments_app.get("/course_assignments", async (req, res) => {
+  const assignments = await getResources("course_assignments");
+  const courses = await getResources("courses");
   res.json({
-    assignments: courseAssignments,
+    assignments,
+    courses,
   });
 });
 
 // Get assignments for a specific course
-course_assignments_app.get("/course_assignments/:unitCode", (req, res) => {
-  const unitCode = req.params.unitCode;
-  const courseAssignment = courseAssignments.find(
-    (assignment) => assignment.unitCode === unitCode
-  );
-  if (!courseAssignment) {
-    return res.status(404).json({
-      message: `Assignments for course ${unitCode} not found`,
-    });
-  }
-  res.status(201).json(courseAssignment);
-});
+course_assignments_app.get(
+  "/course_assignments/:unitCode",
+  async (req, res) => {
+    const assignments = await getResources("course_assignments");
+    const courses = await getResources("courses");
 
-// Add a new assignment for a specific course
-course_assignments_app.post("/course_assignments/:unitCode", (req, res) => {
-  const unitCode = req.params.unitCode;
-  const courseAssignment = courseAssignments.find(
-    (assignment) => assignment.unitCode === unitCode
-  );
-
-  if (!courseAssignment) {
-    return res.status(404).json({
-      message: `Course ${unitCode} not found for assignments`,
-    });
-  }
-
-  const newAssignment = {
-    id: courseAssignment.assignments.length + 1, // Auto-increment ID
-    question: req.body.question,
-  };
-
-  courseAssignment.assignments.push(newAssignment);
-  res.status(200).json({
-    message: "Assignment added successfully",
-    courseAssignment,
-  });
-});
-
-course_assignments_app.patch(
-  "/course_assignments/:unitCode/:id",
-  (req, res) => {
     const unitCode = req.params.unitCode;
-    const assignmentId = parseInt(req.params.id, 10);
-    const courseAssignment = courseAssignments.find(
-      (assignment) => assignment.unitCode === unitCode
-    );
 
-    const assignment = courseAssignment.assignments.find(
-      (a) => a.id === assignmentId
+    const course = courses.find((c) => c.unit_code === unitCode);
+
+    const assignment = assignments.filter(
+      (assignment) => assignment.unit_code === unitCode
     );
 
     if (!assignment) {
       return res.status(404).json({
-        message: `Assignment with id ${assignmentId} not found for course ${unitCode}`,
+        message: `Assignments for course ${unitCode} not found`,
       });
     }
+    res.status(201).json({
+      assignment,
+      course,
+    });
+  }
+);
 
-    if (req.body.question) {
-      assignment.question = req.body.question;
+// Add a new assignment for a specific course
+course_assignments_app.post(
+  "/course_assignments/:unitCode",
+  async (req, res) => {
+    const unitCode = req.params.unitCode;
+    const { question } = req.body;
+    try {
+      const result = await db.query(
+        `INSERT INTO course_assignments (unit_code, question) VALUES($1, $2) RETURNING*`,
+        [unitCode, question]
+      );
+      const assignment = result.rows[0];
+      res.status(200).json({
+        message: "Assignment added successfully",
+        assignment,
+      });
+    } catch (error) {
+      console.log(error);
     }
+  }
+);
 
+course_assignments_app.patch("/course_assignments/:id", async (req, res) => {
+  const { question } = req.body;
+
+  try {
+    const result = await db.query(
+      `UPDATE course_assignments SET question = $1 WHERE id = $2 RETURNING*`,
+      [question, parseInt(req.params.id, 10)]
+    );
+    const assignment = result.rows[0];
     res.status(200).json({
       message: "Assignment updated successfully",
-      courseAssignment,
+      assignment,
     });
+  } catch (error) {
+    console.log(error);
   }
-);
+});
 
 // Delete an assignment
-course_assignments_app.delete(
-  "/course_assignments/:unitCode/:id",
-  (req, res) => {
-    const unitCode = req.params.unitCode;
-    const assignmentId = parseInt(req.params.id, 10);
-    const courseAssignment = courseAssignments.find(
-      (assignment) => assignment.unitCode === unitCode
+course_assignments_app.delete("/course_assignments/:id", async (req, res) => {
+  try {
+    const result = await db.query(
+      `DELETE FROM course_assignments WHERE id = $1 RETURNING*`,
+      [parseInt(req.params.id, 10)]
     );
-
-    const assignmentIndex = courseAssignment.assignments.findIndex(
-      (a) => a.id === assignmentId
-    );
-
-    if (assignmentIndex === -1) {
-      return res.status(404).json({
-        message: `Assignment with id ${assignmentId} not found for course ${unitCode}`,
-      });
-    }
-
-    courseAssignment.assignments.splice(assignmentIndex, 1);
-
+    const assignment = result.rows[0];
     res.status(200).json({
       message: "Assignment deleted successfully",
-      courseAssignment,
+      assignment,
     });
+  } catch (error) {
+    console.log(error);
   }
-);
+});
 
 export default course_assignments_app;

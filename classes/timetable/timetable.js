@@ -1,6 +1,8 @@
 import express from "express";
 import bodyParser from "body-parser";
-import { subjects, schedules } from "../timetable.js"; // Assuming subjects and schedules are defined
+// import { subjects, schedules } from "../timetable.js";
+import { getResources } from "../../database/dbfunctions.js";
+import db from "../../database/connect.js";
 
 const timetable_app = express.Router();
 
@@ -10,142 +12,70 @@ timetable_app.use(bodyParser.json());
 // TIMETABLE
 
 // get all timetables (combining subjects and schedules)
-timetable_app.get("/timetables", (req, res) => {
-  const timetables = subjects.map((subject) => {
-    const subjectSchedule = schedules.filter(
-      (schedule) => schedule.subject_id === subject.id
-    );
-    return {
-      ...subject,
-      schedule: subjectSchedule,
-    };
-  });
+timetable_app.get("/timetables", async (req, res) => {
+  const courses = await getResources("courses");
+  const schedules = await getResources("semester_timetable");
 
   res.json({
-    timetables: timetables,
-  });
-});
-
-// get specific timetable by subject id
-timetable_app.get("/timetables/:id", (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const subject = subjects.find((subject) => subject.id === id);
-  if (!subject) {
-    return res.status(404).json({
-      message: `Subject with id ${id} not found`,
-    });
-  }
-
-  const subjectSchedule = schedules.filter(
-    (schedule) => schedule.subject_id === id
-  );
-  res.status(200).json({
-    ...subject,
-    schedule: subjectSchedule,
+    courses,
+    schedules,
   });
 });
 
 // add a new timetable (subject and schedule)
-timetable_app.post("/timetables", (req, res) => {
-  const newSubject = {
-    id: subjects.length + 1,
-    name: req.body.name,
-  };
+timetable_app.post("/timetables", async (req, res) => {
+  const { unit_code, day, start_time, duration, room } = req.body;
 
-  subjects.push(newSubject);
+  try {
+    const result = await db.query(
+      `INSERT INTO semester_timetable (unit_code, day, start_time, duration, room) VALUES($1, $2, $3, $4, $5) RETURNING*`,
+      [unit_code, day, start_time, duration, room]
+    );
+    const schedule = result.rows[0];
 
-  const newSchedule = req.body.schedule.map((scheduleEntry) => ({
-    id: schedules.length + 1, // Assuming unique id for schedules
-    subject_id: newSubject.id,
-    ...scheduleEntry,
-  }));
-
-  schedules.push(...newSchedule);
-
-  res.status(200).json({
-    message: "Subject and schedule added successfully",
-    subject: newSubject,
-    schedule: newSchedule,
-  });
+    res.status(200).json({
+      message: "Schedule added successfully",
+      schedule,
+    });
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 // update a timetable (subject name and schedule)
-timetable_app.patch("/timetables/:id", (req, res) => {
+timetable_app.patch("/timetables/:id", async (req, res) => {
   const id = parseInt(req.params.id, 10);
-  const subject = subjects.find((subject) => subject.id === id);
-
-  if (!subject) {
-    return res.status(404).json({
-      message: `Subject with id ${id} not found`,
+  const { day, start_time, duration, room } = req.body;
+  try {
+    const result = await db.query(
+      `UPDATE semester_timetable SET day = $1, start_time = $2, duration = $3, room = $4 WHERE id = $5 RETURNING*`,
+      [day, start_time, duration, room, id]
+    );
+    const schedule = result.rows[0];
+    res.status(200).json({
+      message: "Schedule Updated successfully",
+      schedule,
     });
+  } catch (error) {
+    console.log(error);
   }
-
-  // Update subject name if provided
-  if (req.body.name) subject.name = req.body.name;
-
-  // Update schedule if provided
-  if (req.body.schedule) {
-    req.body.schedule.forEach((update) => {
-      const scheduleToUpdate = schedules.find(
-        (entry) => entry.subject_id === id && entry.day === update.day
-      );
-
-      // If a matching schedule entry is found, update it
-      if (scheduleToUpdate) {
-        if (update.start_time) scheduleToUpdate.start_time = update.start_time;
-        if (update.duration) scheduleToUpdate.duration = update.duration;
-        if (update.room) scheduleToUpdate.room = update.room;
-      } else {
-        // If no matching schedule entry, add a new one
-        schedules.push({
-          id: schedules.length + 1,
-          subject_id: id,
-          day: update.day,
-          start_time: update.start_time,
-          duration: update.duration,
-          room: update.room,
-        });
-      }
-    });
-  }
-
-  res.status(200).json({
-    message: "Timetable updated successfully",
-    subject,
-    schedule: schedules.filter((schedule) => schedule.subject_id === id),
-  });
 });
 
 // delete a timetable (subject and its schedules)
-timetable_app.delete("/timetables/:id", (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const subjectIndex = subjects.findIndex((subject) => subject.id === id);
-
-  if (subjectIndex === -1) {
-    return res.status(404).json({
-      message: `Subject with id ${id} not found`,
+timetable_app.delete("/timetables/:id", async (req, res) => {
+  try {
+    const result = await db.query(
+      `DELETE FROM semester_timetable WHERE id = $1 RETURNING*`,
+      [parseInt(req.params.id, 10)]
+    );
+    const schedule = result.rows[0];
+    res.status(200).json({
+      message: "Schedule deleted successfully",
+      schedule,
     });
+  } catch (error) {
+    console.log(error);
   }
-
-  // Remove the subject
-  subjects.splice(subjectIndex, 1);
-
-  // Remove all schedules associated with the subject
-  const schedulesToRemove = schedules.filter(
-    (schedule) => schedule.subject_id === id
-  );
-  schedulesToRemove.forEach((schedule) => {
-    const index = schedules.indexOf(schedule);
-    if (index > -1) {
-      schedules.splice(index, 1);
-    }
-  });
-
-  res.status(200).json({
-    message: "Timetable deleted successfully",
-    subjects,
-    schedules,
-  });
 });
 
 export default timetable_app;

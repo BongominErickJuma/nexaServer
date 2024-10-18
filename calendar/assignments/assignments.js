@@ -1,6 +1,8 @@
 import express from "express";
 import bodyParser from "body-parser";
-import assignments from "../assignments.js";
+// import assignments from "../assignments.js";
+import { getResources } from "../../database/dbfunctions.js";
+import db from "../../database/connect.js";
 
 const assignments_app = express.Router();
 
@@ -10,15 +12,19 @@ assignments_app.use(bodyParser.json());
 // assignments
 
 // get all assignments
-assignments_app.get("/assignments", (req, res) => {
+assignments_app.get("/assignments", async (req, res) => {
+  const assignments = await getResources("assignment_timetable");
+  const courses = await getResources("courses");
   res.json({
-    assignments: assignments,
+    assignments,
+    courses,
   });
 });
 
 // get specific assignment
-assignments_app.get("/assignments/:id", (req, res) => {
+assignments_app.get("/assignments/:id", async (req, res) => {
   const id = parseInt(req.params.id, 10);
+  const assignments = await getResources("assignment_timetable");
   const assignment = assignments.find((assignment) => assignment.id === id);
   if (!assignment) {
     return res.status(404).json({
@@ -30,64 +36,59 @@ assignments_app.get("/assignments/:id", (req, res) => {
 });
 
 // add a new assignment
-assignments_app.post("/assignments", (req, res) => {
-  const assignment = {
-    id: assignments.length + 1,
-    name: req.body.name,
-    duedate: req.body.duedate,
-    location: req.body.location,
-    description: req.body.description,
-  };
-  assignments.push(assignment);
-  res.status(200).json({
-    message: "assignment added successfully",
-    assignment,
-    assignments,
-  });
+assignments_app.post("/assignments", async (req, res) => {
+  const { unit_code, duedate, location, description } = req.body;
+  try {
+    const result = await db.query(
+      `INSERT INTO assignment_timetable (unit_code, duedate, location, description) VALUES($1, $2, $3, $4) RETURNING*`,
+      [unit_code, duedate, location, description]
+    );
+    const assignment_timetable = result.rows[0];
+    res.status(200).json({
+      message: "exam added successfully",
+      assignment_timetable,
+    });
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 // update a assignment
 
-assignments_app.patch("/assignments/:id", (req, res) => {
+assignments_app.patch("/assignments/:id", async (req, res) => {
   const id = parseInt(req.params.id, 10);
-  const assignment = assignments.find((assignment) => assignment.id === id);
-  if (!assignment) {
-    return res.status(404).json({
-      message: `assignment with id ${id} not found`,
+  const { duedate, location, description } = req.body;
+  try {
+    const result = await db.query(
+      `UPDATE assignment_timetable SET duedate = $1, location = $2, description= $3 WHERE id = $4 RETURNING*`,
+      [duedate, location, description, id]
+    );
+    const assignment_timetable = result.rows[0];
+    res.status(200).json({
+      message: "exam Updated successfully",
+      assignment_timetable,
     });
+  } catch (error) {
+    console.log(error);
   }
-
-  if (req.body.name) assignment.name = req.body.name;
-  if (req.body.duedate) assignment.duedate = req.body.duedate;
-  if (req.body.location) assignment.location = req.body.location;
-  if (req.body.description) assignment.description = req.body.description;
-
-  res.status(200).json({
-    message: "assignment Updated successfully",
-    assignment,
-    assignments,
-  });
 });
 
 // delete assignment
 
-assignments_app.delete("/assignments/:id", (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const assignmentIndex = assignments.findIndex(
-    (assignment) => assignment.id === id
-  );
-  if (assignmentIndex === -1) {
-    return res.status(404).json({
-      message: `assignment with id ${id} not found`,
+assignments_app.delete("/assignments/:id", async (req, res) => {
+  try {
+    const result = await db.query(
+      `DELETE FROM assignment_timetable WHERE id = $1 RETURNING*`,
+      [parseInt(req.params.id, 10)]
+    );
+    const assignment_timetable = result.rows[0];
+    res.status(200).json({
+      message: "assignment_timetable deleted successfully",
+      assignment_timetable,
     });
+  } catch (error) {
+    console.log(error);
   }
-
-  assignments.splice(assignmentIndex, 1);
-
-  res.status(200).json({
-    message: "assignment Deleted successfully",
-    assignments,
-  });
 });
 
 export default assignments_app;

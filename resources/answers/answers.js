@@ -1,149 +1,91 @@
 import express from "express";
 import bodyParser from "body-parser";
-import courseAssignmentAnswers from "../answers.js"; // assuming you export your answers array
+
+import { getResources } from "../../database/dbfunctions.js";
+import db from "../../database/connect.js";
 
 const answers_app = express.Router();
 
 answers_app.use(bodyParser.urlencoded({ extended: true }));
 answers_app.use(bodyParser.json());
 
-// Get all answers
-answers_app.get("/answers", (req, res) => {
-  res.json({
-    answers: courseAssignmentAnswers,
-  });
-});
-
 // Get answers for a specific course
-answers_app.get("/answers/:unitCode", (req, res) => {
+answers_app.get("/answers/:unitCode", async (req, res) => {
   const unitCode = req.params.unitCode;
-  const courseAnswer = courseAssignmentAnswers.find(
-    (course) => course.unitCode === unitCode
+  const assignmentAnswers = await getResources("assignment_answers");
+  const assignments = await getResources("course_assignments");
+  const courses = await getResources("courses");
+
+  const course = courses.find((c) => c.unit_code === unitCode);
+
+  const questions = assignments.filter(
+    (assignment) => assignment.unit_code === unitCode
   );
-  if (!courseAnswer) {
-    return res.status(404).json({
-      message: `Answers for course ${unitCode} not found`,
-    });
-  }
-  res.status(200).json(courseAnswer);
+
+  const answers = assignmentAnswers.filter((aa) => aa.unit_code === unitCode);
+
+  res.status(200).json({
+    questions,
+    answers,
+    course,
+  });
 });
 
 // Add a new answer for a specific course question
-answers_app.post("/answers/:unitCode/:questionId", (req, res) => {
+answers_app.post("/answers/:unitCode/:questionId", async (req, res) => {
   const { unitCode, questionId } = req.params;
-  const courseAnswer = courseAssignmentAnswers.find(
-    (course) => course.unitCode === unitCode
-  );
+  const { answer } = req.body;
 
-  if (!courseAnswer) {
-    return res.status(404).json({
-      message: `Course ${unitCode} not found`,
+  try {
+    const result = await db.query(
+      `INSERT INTO assignment_answers (assignments_id, unit_code, answer) VALUES($1, $2, $3) RETURNING*`,
+      [parseInt(questionId, 10), unitCode, answer]
+    );
+    const insertedAnswer = result.rows[0];
+    res.status(200).json({
+      message: "New answer added successfully",
+      insertedAnswer,
     });
+  } catch (error) {
+    console.log(error);
   }
-
-  const question = courseAnswer.answers.find(
-    (q) => q.id === parseInt(questionId)
-  );
-
-  if (!question) {
-    return res.status(404).json({
-      message: `Question ID ${questionId} not found for course ${unitCode}`,
-    });
-  }
-
-  const newAnswer = {
-    id: question.answers.length + 1,
-    answer: req.body.answer,
-  };
-
-  question.answers.push(newAnswer);
-
-  res.status(200).json({
-    message: "New answer added successfully",
-    courseAnswer,
-  });
 });
 
 // Update a specific answer for a specific course question
-answers_app.patch("/answers/:unitCode/:questionId/:answerId", (req, res) => {
-  const { unitCode, questionId, answerId } = req.params;
-  const courseAnswer = courseAssignmentAnswers.find(
-    (course) => course.unitCode === unitCode
-  );
-
-  if (!courseAnswer) {
-    return res.status(404).json({
-      message: `Course ${unitCode} not found`,
+answers_app.patch("/answers/:answerId", async (req, res) => {
+  const { answerId } = req.params;
+  const { answer } = req.body;
+  try {
+    const result = await db.query(
+      `UPDATE assignment_answers SET answer = $1 WHERE id = $2 RETURNING*`,
+      [answer, parseInt(answerId, 10)]
+    );
+    const insertedAnswer = result.rows[0];
+    res.status(200).json({
+      message: "Answer updated successfully",
+      insertedAnswer,
     });
+  } catch (error) {
+    console.log(error);
   }
-
-  const question = courseAnswer.answers.find(
-    (q) => q.id === parseInt(questionId)
-  );
-
-  if (!question) {
-    return res.status(404).json({
-      message: `Question ID ${questionId} not found for course ${unitCode}`,
-    });
-  }
-
-  const answer = question.answers.find((a) => a.id === parseInt(answerId));
-
-  if (!answer) {
-    return res.status(404).json({
-      message: `Answer ID ${answerId} not found for question ${questionId}`,
-    });
-  }
-
-  if (req.body.answer) {
-    answer.answer = req.body.answer;
-  }
-
-  res.status(200).json({
-    message: "Answer updated successfully",
-    courseAnswer,
-  });
 });
 
 // Delete a specific answer for a specific course question
-answers_app.delete("/answers/:unitCode/:questionId/:answerId", (req, res) => {
-  const { unitCode, questionId, answerId } = req.params;
-  const courseAnswer = courseAssignmentAnswers.find(
-    (course) => course.unitCode === unitCode
-  );
-
-  if (!courseAnswer) {
-    return res.status(404).json({
-      message: `Course ${unitCode} not found`,
+answers_app.delete("/answers/:answerId", async (req, res) => {
+  const { answerId } = req.params;
+  try {
+    const result = await db.query(
+      `DELETE FROM assignment_answers WHERE id = $1 RETURNING*`,
+      [parseInt(answerId, 10)]
+    );
+    const answer = result.rows[0];
+    res.status(200).json({
+      message: "Answer deleted successfully",
+      answer,
     });
+  } catch (error) {
+    console.log(error);
   }
-
-  const question = courseAnswer.answers.find(
-    (q) => q.id === parseInt(questionId)
-  );
-
-  if (!question) {
-    return res.status(404).json({
-      message: `Question ID ${questionId} not found for course ${unitCode}`,
-    });
-  }
-
-  const answerIndex = question.answers.findIndex(
-    (a) => a.id === parseInt(answerId)
-  );
-
-  if (answerIndex === -1) {
-    return res.status(404).json({
-      message: `Answer ID ${answerId} not found for question ${questionId}`,
-    });
-  }
-
-  question.answers.splice(answerIndex, 1);
-
-  res.status(200).json({
-    message: "Answer deleted successfully",
-    courseAnswer,
-  });
 });
 
 export default answers_app;

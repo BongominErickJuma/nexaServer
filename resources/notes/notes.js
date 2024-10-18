@@ -1,6 +1,8 @@
 import express from "express";
 import bodyParser from "body-parser";
-import courseNotes from "../notes.js"; // Assuming you store the notes data in a file called notes.js
+import db from "../../database/connect.js";
+import { getResources } from "../../database/dbfunctions.js";
+// import courseNotes from "../notes.js";
 
 const notes_app = express.Router();
 
@@ -10,40 +12,47 @@ notes_app.use(bodyParser.json());
 // NOTES
 
 // Get all notes for all courses
-notes_app.get("/notes", (req, res) => {
+notes_app.get("/notes", async (req, res) => {
+  const courseNotes = await getResources("course_notes");
   res.json({
     courseNotes,
   });
 });
 
 // Get all notes for a specific course by subject_id
-notes_app.get("/notes/:subject_id", (req, res) => {
-  const course = courseNotes.find(
-    (course) => course.subject_id === req.params.subject_id
+notes_app.get("/notes/:subject_id", async (req, res) => {
+  const courseNotes = await getResources("course_notes");
+
+  // Filter notes that match the subject_id
+  const notes = courseNotes.filter(
+    (note) => note.subject_id === req.params.subject_id
   );
-  if (!course) {
-    return res.status(404).json({
-      message: `Course with subject id ${req.params.subject_id} not found`,
-    });
+
+  if (notes.length > 0) {
+    res.status(200).json(notes); // Return all matching notes
+  } else {
+    res.status(404).json({ message: "No notes found for this subject" }); // Handle case where no notes are found
   }
-  res.status(200).json(course.notes);
 });
 
 // getting a specific chapter of a note by subject ID and chapter number
-notes_app.get("/notes/:subject_id/:chapterNumber", (req, res) => {
+notes_app.get("/notes/:subject_id/:chapterNumber", async (req, res) => {
+  const courseNotes = await getResources("course_notes");
   const { subject_id, chapterNumber } = req.params;
 
-  // Find the course notes by subject_id
-  const course = courseNotes.find((course) => course.subject_id === subject_id);
+  // Filter notes that match the subject_id
+  const notes = courseNotes.filter((note) => note.subject_id === subject_id);
 
-  if (!course) {
+  if (!(notes.length > 0)) {
     return res.status(404).json({
-      message: `Course with subject id ${subject_id} not found`,
+      message: `Course with unit code ${subject_id} not found`,
     });
   }
 
-  // Find the specific chapter by chapter number (convert to string for comparison)
-  const chapter = course.notes.find((chap) => chap.chapter === chapterNumber);
+  // Convert chapterNumber to a number for comparison
+  const chapter = notes.find(
+    (chap) => chap.chapter === parseInt(chapterNumber, 10)
+  );
 
   if (!chapter) {
     return res.status(404).json({
@@ -51,91 +60,92 @@ notes_app.get("/notes/:subject_id/:chapterNumber", (req, res) => {
     });
   }
 
-  res.status(200).json(chapter);
+  res.status(200).json({
+    chapter,
+  });
 });
 
 // Add a new note (chapter) to a specific course by subject_id
-notes_app.post("/notes/:subject_id", (req, res) => {
-  const course = courseNotes.find(
-    (course) => course.subject_id === req.params.subject_id
+notes_app.post("/notes/:subject_id", async (req, res) => {
+  const courses = await getResources("courses");
+  const courseNotes = await getResources("course_notes");
+  // Filter notes that match the subject_id
+  const course = courses.filter(
+    (course) => course.unit_code === req.params.subject_id
   );
-  if (!course) {
+
+  if (!(course.length > 0)) {
     return res.status(404).json({
-      message: `Course with subject id ${req.params.subject_id} not found`,
+      message: `Course with unit code ${req.params.subject_id} not found`,
     });
   }
+  let nextChapterNumber = 1;
 
+  const notes = courseNotes.filter(
+    (cn) => cn.subject_id === req.params.subject_id
+  );
+
+  if (notes.length > 0) {
+    nextChapterNumber = notes.length + 1;
+  }
   // Automatically generate the next chapter number based on the length of the notes array
-  const nextChapterNumber = `${course.notes.length + 1}`;
 
-  const newNote = {
-    chapter: nextChapterNumber,
-    title: req.body.title,
-    content: req.body.content,
-    attachments: req.body.attachments || [],
-  };
+  const course_units = req.params.subject_id;
 
-  course.notes.push(newNote);
+  const { title, content } = req.body;
 
-  res.status(200).json({
-    message: "Note added successfully",
-    course,
-  });
+  try {
+    const result = await db.query(
+      "INSERT INTO course_notes(subject_id, chapter, title, content) VALUES ($1, $2, $3, $4) RETURNING*",
+      [course_units, nextChapterNumber, title, content]
+    );
+    const note = result.rows[0];
+    res.status(200).json({
+      message: "Note added successfully",
+      note,
+    });
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 // Update a specific note (chapter) for a course by subject_id and chapter number
-notes_app.patch("/notes/:subject_id/:chapter", (req, res) => {
-  const course = courseNotes.find(
-    (course) => course.subject_id === req.params.subject_id
-  );
-  if (!course) {
-    return res.status(404).json({
-      message: `Course with subject id ${req.params.subject_id} not found`,
+notes_app.patch("/notes/:id", async (req, res) => {
+  const { id } = req.params;
+  const { title, content } = req.body;
+
+  try {
+    const result = await db.query(
+      "UPDATE course_notes SET title = $1, content = $2 WHERE id = $3 RETURNING*",
+      [title, content, parseInt(id, 10)]
+    );
+    const note = result.rows[0];
+
+    res.status(200).json({
+      message: "Note updated successfully",
+      note,
     });
+  } catch (error) {
+    console.log(error);
   }
-
-  const note = course.notes.find((note) => note.chapter === req.params.chapter);
-  if (!note) {
-    return res.status(404).json({
-      message: `Chapter ${req.params.chapter} not found for course with subject id ${req.params.subject_id}`,
-    });
-  }
-
-  if (req.body.title) note.title = req.body.title;
-  if (req.body.content) note.content = req.body.content;
-  if (req.body.attachments) note.attachments = req.body.attachments;
-
-  res.status(200).json({
-    message: "Note updated successfully",
-    note,
-  });
 });
 
 // Delete a specific note (chapter) for a course by subject_id and chapter number
-notes_app.delete("/notes/:subject_id/:chapter", (req, res) => {
-  const course = courseNotes.find(
-    (course) => course.subject_id === req.params.subject_id
-  );
-  if (!course) {
-    return res.status(404).json({
-      message: `Course with subject id ${req.params.subject_id} not found`,
+notes_app.delete("/notes/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await db.query(
+      "DELETE FROM course_notes WHERE id = $1 RETURNING*",
+      [parseInt(id, 10)]
+    );
+    const note = result.rows[0];
+    res.status(200).json({
+      message: "Note Deleted successfully",
+      note,
     });
+  } catch (error) {
+    console.log(error);
   }
-
-  const noteIndex = course.notes.findIndex(
-    (note) => note.chapter === req.params.chapter
-  );
-  if (noteIndex === -1) {
-    return res.status(404).json({
-      message: `Chapter ${req.params.chapter} not found for course with subject id ${req.params.subject_id}`,
-    });
-  }
-
-  course.notes.splice(noteIndex, 1);
-  res.status(200).json({
-    message: "Note deleted successfully",
-    course,
-  });
 });
 
 export default notes_app;

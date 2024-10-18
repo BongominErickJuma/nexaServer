@@ -1,8 +1,12 @@
 import express from "express";
 import bodyParser from "body-parser";
-import students from "../students.js";
+import { getResources } from "../../database/dbfunctions.js";
+import db from "../../database/connect.js";
+import bcrypt from "bcrypt";
+// import students from "../students.js";
 
 const students_app = express.Router();
+const saltRounds = 10;
 
 students_app.use(bodyParser.urlencoded({ extended: true }));
 students_app.use(bodyParser.json());
@@ -10,15 +14,17 @@ students_app.use(bodyParser.json());
 // STUDENTS
 
 // get all students
-students_app.get("/students", (req, res) => {
+students_app.get("/students", async (req, res) => {
+  const students = await getResources("students");
   res.json({
-    students: students,
+    students,
   });
 });
 
 // get specific student
-students_app.get("/students/:id", (req, res) => {
+students_app.get("/students/:id", async (req, res) => {
   const id = parseInt(req.params.id, 10);
+  const students = await getResources("students");
   const student = students.find((student) => student.id === id);
   if (!student) {
     return res.status(404).json({
@@ -30,65 +36,71 @@ students_app.get("/students/:id", (req, res) => {
 });
 
 // add a new student
-students_app.post("/students", (req, res) => {
-  const student = {
-    id: students.length + 1,
-    name: req.body.name,
-    email: req.body.email,
-    phone: req.body.phone,
-    grade: req.body.grade,
-    image: req.body.image,
-    major: req.body.major,
-    bio: req.body.bio,
-  };
-  students.push(student);
-  res.status(200).json({
-    message: "Student added successfully",
-    student,
-    students,
-  });
+students_app.post("/students", async (req, res) => {
+  const { name, email, phone, role, password, image } = req.body;
+  const hashedPassword = await bcrypt.hash(password, saltRounds);
+  try {
+    const students = await getResources("students");
+    const isStudent = students.some((st) => st.name === name);
+    if (isStudent) {
+      return res.status(409).json({
+        message: "Student Name already exists",
+      });
+    }
+
+    const result = await db.query(
+      "INSERT INTO students(name, email, phone, image, password, role) VALUES ($1, $2, $3, $4, $5, $6) RETURNING*",
+      [name, email, phone, image, hashedPassword, role]
+    );
+    const student = result.rows[0];
+    // teachers.push(teacher);
+    res.status(200).json({
+      message: "student added successfully",
+      student,
+    });
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 // update a student
 
-students_app.patch("/students/:id", (req, res) => {
+students_app.patch("/students/:id", async (req, res) => {
   const id = parseInt(req.params.id, 10);
-  const student = students.find((student) => student.id === id);
-  if (!student) {
-    return res.status(404).json({
-      message: `Student with id ${id} not found`,
+  const { name, email, phone, image } = req.body;
+  try {
+    const result = await db.query(
+      "UPDATE students SET name = $1, email = $2, phone = $3, image = $4 WHERE id = $5 RETURNING*",
+      [name, email, phone, image, id]
+    );
+    const student = result.rows[0];
+    res.status(200).json({
+      message: "student Updated successfully",
+      student,
     });
+  } catch (error) {
+    console.log(error);
   }
-
-  if (req.body.name) student.name = req.body.name;
-  if (req.body.email) student.email = req.body.email;
-  if (req.body.phone) student.phone = req.body.phone;
-  if (req.body.image) student.image = req.body.image;
-
-  res.status(200).json({
-    message: "Student Updated successfully",
-    student,
-    students,
-  });
 });
 
 // delete student
 
-students_app.delete("/students/:id", (req, res) => {
+students_app.delete("/students/:id", async (req, res) => {
   const id = parseInt(req.params.id, 10);
-  const studentIndex = students.findIndex((student) => student.id === id);
-  if (studentIndex === -1) {
-    return res.status(404).json({
-      message: `Student with id ${id} not found`,
+
+  try {
+    const result = await db.query(
+      "DELETE FROM students WHERE id = $1 RETURNING*",
+      [id]
+    );
+    const student = result.rows[0];
+    res.status(200).json({
+      message: "student Deleted successfully",
+      student,
     });
+  } catch (error) {
+    console.log(error);
   }
-
-  students.splice(studentIndex, 1);
-
-  res.status(200).json({
-    message: "Student Deleted successfully",
-    students,
-  });
 });
 
 export default students_app;
