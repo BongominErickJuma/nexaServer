@@ -34,12 +34,12 @@ answers_app.get("/answers/:unitCode", async (req, res) => {
 // Add a new answer for a specific course question
 answers_app.post("/answers/:unitCode/:questionId", async (req, res) => {
   const { unitCode, questionId } = req.params;
-  const { answer } = req.body;
+  const { answer, student_id } = req.body;
 
   try {
     const result = await db.query(
-      `INSERT INTO assignment_answers (assignments_id, unit_code, answer) VALUES($1, $2, $3) RETURNING*`,
-      [parseInt(questionId, 10), unitCode, answer]
+      `INSERT INTO assignment_answers (assignments_id, unit_code, answer, student_id) VALUES($1, $2, $3, $4) RETURNING*`,
+      [parseInt(questionId, 10), unitCode, answer, parseInt(student_id, 10)]
     );
     const insertedAnswer = result.rows[0];
     res.status(200).json({

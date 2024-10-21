@@ -2,6 +2,7 @@ import express from "express";
 import bodyParser from "body-parser";
 import bcrypt from "bcrypt";
 import { getResources } from "../database/dbfunctions.js";
+import db from "../database/connect.js";
 
 const login_app = express.Router();
 
@@ -31,6 +32,18 @@ login_app.post("/login", async (req, res) => {
       return res.json({
         message: "Wrong password",
       });
+    }
+    if (user.role === "student") {
+      await db.query("UPDATE students SET status = $1 WHERE id = $2", [
+        "online",
+        user.id,
+      ]);
+    }
+    if (user.role !== "student") {
+      await db.query("UPDATE teachers SET status = $1 WHERE id = $2", [
+        "online",
+        user.id,
+      ]);
     }
     res.status(200).json({
       message: "Login successful",

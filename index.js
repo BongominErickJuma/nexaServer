@@ -12,6 +12,8 @@ import notes_app from "./resources/notes/notes.js";
 import meetings_app from "./calendar/meetings/meetings.js";
 import events_app from "./classes/Events/events.js";
 import login_app from "./Login/login.js";
+import overall_stats_app from "./statistics/overallStats.js";
+import logout from "./Logout/logout.js";
 
 // configure express
 const app = express();
@@ -25,9 +27,15 @@ app.use(
   })
 );
 
+// stats
+
+app.use(overall_stats_app);
 // login
 
 app.use(login_app);
+
+// logout
+app.use(logout);
 
 // meetings route
 
