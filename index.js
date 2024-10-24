@@ -14,6 +14,8 @@ import events_app from "./classes/Events/events.js";
 import login_app from "./Login/login.js";
 import overall_stats_app from "./statistics/overallStats.js";
 import logout from "./Logout/logout.js";
+import performance_app from "./statistics/performances/Sperformance/sperformance.js";
+import answered_app from "./statistics/answered/answered.js";
 
 // configure express
 const app = express();
@@ -70,6 +72,11 @@ app.use(answers_app);
 // notes routes
 app.use(notes_app);
 
+// performance routes
+app.use(performance_app);
+
+// answered routes
+app.use(answered_app);
 app.listen(port, () => {
   console.log(`listening on ${port}`);
 });

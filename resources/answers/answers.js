@@ -56,15 +56,29 @@ answers_app.patch("/answers/:answerId", async (req, res) => {
   const { answerId } = req.params;
   const { answer } = req.body;
   try {
-    const result = await db.query(
-      `UPDATE assignment_answers SET answer = $1 WHERE id = $2 RETURNING*`,
-      [answer, parseInt(answerId, 10)]
-    );
-    const insertedAnswer = result.rows[0];
-    res.status(200).json({
-      message: "Answer updated successfully",
-      insertedAnswer,
-    });
+    if (answer) {
+      const result = await db.query(
+        `UPDATE assignment_answers SET answer = $1 WHERE id = $2 RETURNING*`,
+        [answer, parseInt(answerId, 10)]
+      );
+      const insertedAnswer = result.rows[0];
+
+      res.status(200).json({
+        message: "Answer updated successfully",
+        insertedAnswer,
+      });
+    } else {
+      const result = await db.query(
+        `UPDATE assignment_answers SET status = $1 WHERE id = $2 RETURNING*`,
+        ["marked", parseInt(answerId, 10)]
+      );
+      const insertedAnswer = result.rows[0];
+
+      res.status(200).json({
+        message: "Answer updated successfully",
+        insertedAnswer,
+      });
+    }
   } catch (error) {
     console.log(error);
   }

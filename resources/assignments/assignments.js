@@ -27,6 +27,7 @@ course_assignments_app.get(
   async (req, res) => {
     const assignments = await getResources("course_assignments");
     const courses = await getResources("courses");
+    const ans = await getResources("answered");
 
     const unitCode = req.params.unitCode;
 
@@ -44,6 +45,7 @@ course_assignments_app.get(
     res.status(201).json({
       assignment,
       course,
+      ans,
     });
   }
 );
