@@ -16,6 +16,8 @@ import overall_stats_app from "./statistics/overallStats.js";
 import logout from "./Logout/logout.js";
 import performance_app from "./statistics/performances/Sperformance/sperformance.js";
 import answered_app from "./statistics/answered/answered.js";
+import password_app from "./updates/passwords.js";
+import images_app from "./updates/images.js";
 
 // configure express
 const app = express();
@@ -75,6 +77,11 @@ app.use(notes_app);
 // performance routes
 app.use(performance_app);
 
+// passwords routes
+app.use(password_app);
+
+// image routes
+app.use(images_app);
 // answered routes
 app.use(answered_app);
 app.listen(port, () => {

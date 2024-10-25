@@ -59,7 +59,6 @@ performance_app.post("/performance", async (req, res) => {
         `UPDATE assignment_answers SET status = $1 WHERE id = $2`,
         ["marked", id]
       );
-      console.log("operated");
     }
     const performance = result.rows[0];
 

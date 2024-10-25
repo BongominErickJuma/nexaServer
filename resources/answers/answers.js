@@ -42,6 +42,12 @@ answers_app.post("/answers/:unitCode/:questionId", async (req, res) => {
       [parseInt(questionId, 10), unitCode, answer, parseInt(student_id, 10)]
     );
     const insertedAnswer = result.rows[0];
+    if (insertedAnswer) {
+      await db.query(
+        `INSERT INTO answered (student_id, assignments_id, status) VALUES($1, $2, $3)`,
+        [student_id, questionId, "ans"]
+      );
+    }
     res.status(200).json({
       message: "New answer added successfully",
       insertedAnswer,
