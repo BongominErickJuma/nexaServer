@@ -13,9 +13,11 @@ password_app.use(bodyParser.json());
 // TIMETABLE
 
 // get all timetables (combining subjects and schedules)
+
 password_app.patch("/passwords/:id", async (req, res) => {
   const { password, changedPassword, name, role } = req.body;
   const id = parseInt(req.params.id, 10);
+z
   try {
     const students = await getResources("students");
     const teachers = await getResources("teachers");
