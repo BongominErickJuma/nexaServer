@@ -38,6 +38,7 @@ students_app.get("/students/:id", async (req, res) => {
 // add a new student
 students_app.post("/students", async (req, res) => {
   const { name, email, phone, role, password, image } = req.body;
+  console.log(req.body);
   const hashedPassword = await bcrypt.hash(password, saltRounds);
   try {
     const students = await getResources("students");
