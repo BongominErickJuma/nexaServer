@@ -12,7 +12,7 @@ const createTables = async () => {
             image TEXT,
             password VARCHAR(255) NOT NULL,
             role VARCHAR(255) NOT NULL,
-            status VARCHAR(255) NOT NULL
+            status VARCHAR(255) 
         );
       `,
       name: "students",
@@ -27,7 +27,7 @@ const createTables = async () => {
             image TEXT,
             password VARCHAR(255) NOT NULL,
             role VARCHAR(255) NOT NULL,
-            status VARCHAR(255) NOT NULL
+            status VARCHAR(255) 
         );
       `,
       name: "teachers",
