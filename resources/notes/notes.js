@@ -102,6 +102,7 @@ notes_app.post("/notes/:subject_id", async (req, res) => {
     const note = result.rows[0];
 
     const courses = await getResources("courses");
+
     const course = courses.find(
       (course) => course.unit_code === req.params.unitCode
     );
@@ -130,6 +131,7 @@ notes_app.patch("/notes/:id", async (req, res) => {
       "UPDATE course_notes SET title = $1, content = $2 WHERE id = $3 RETURNING*",
       [title, content, parseInt(id, 10)]
     );
+
     const note = result.rows[0];
     const allCourseNotes = await getResources("course_notes");
     // Filter notes that match the subject_id
@@ -137,10 +139,21 @@ notes_app.patch("/notes/:id", async (req, res) => {
       (note) => note.subject_id === req.params.subject_id
     );
 
+    // Convert chapterNumber to a number for comparison
+    const chapter = notes.find(
+      (chap) => chap.chapter === parseInt(chapterNumber, 10)
+    );
+
+    if (!chapter) {
+      return res.status(404).json({
+        message: `Chapter ${chapterNumber} not found for course with subject id ${subject_id}`,
+      });
+    }
+
     res.status(200).json({
       message: "Note updated successfully",
       note,
-      notes,
+      chapter,
     });
   } catch (error) {
     console.log(error);

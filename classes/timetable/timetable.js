@@ -26,15 +26,15 @@ timetable_app.get("/timetables", async (req, res) => {
 timetable_app.post("/timetables", async (req, res) => {
   const { unit_code, day, start_time, duration, room } = req.body;
 
-  const courses = await getResources("courses");
-  const schedules = await getResources("semester_timetable");
-
   try {
     const result = await db.query(
       `INSERT INTO semester_timetable (unit_code, day, start_time, duration, room) VALUES($1, $2, $3, $4, $5) RETURNING*`,
       [unit_code, day, start_time, duration, room]
     );
     const schedule = result.rows[0];
+
+    const courses = await getResources("courses");
+    const schedules = await getResources("semester_timetable");
 
     res.status(200).json({
       message: "Schedule added successfully",
@@ -52,15 +52,15 @@ timetable_app.patch("/timetables/:id", async (req, res) => {
   const id = parseInt(req.params.id, 10);
   const { day, start_time, duration, room } = req.body;
 
-  const courses = await getResources("courses");
-  const schedules = await getResources("semester_timetable");
-
   try {
     const result = await db.query(
       `UPDATE semester_timetable SET day = $1, start_time = $2, duration = $3, room = $4 WHERE id = $5 RETURNING*`,
       [day, start_time, duration, room, id]
     );
     const schedule = result.rows[0];
+
+    const courses = await getResources("courses");
+    const schedules = await getResources("semester_timetable");
     res.status(200).json({
       message: "Schedule Updated successfully",
       schedule,
@@ -74,14 +74,14 @@ timetable_app.patch("/timetables/:id", async (req, res) => {
 
 // delete a timetable (subject and its schedules)
 timetable_app.delete("/timetables/:id", async (req, res) => {
-  const courses = await getResources("courses");
-  const schedules = await getResources("semester_timetable");
   try {
     const result = await db.query(
       `DELETE FROM semester_timetable WHERE id = $1 RETURNING*`,
       [parseInt(req.params.id, 10)]
     );
     const schedule = result.rows[0];
+    const courses = await getResources("courses");
+    const schedules = await getResources("semester_timetable");
     res.status(200).json({
       message: "Schedule deleted successfully",
       schedule,

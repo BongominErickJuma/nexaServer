@@ -61,10 +61,23 @@ course_assignments_app.post(
         `INSERT INTO course_assignments (unit_code, question) VALUES($1, $2) RETURNING*`,
         [unitCode, question]
       );
-      const assignment = result.rows[0];
+      const returnedAssignment = result.rows[0];
+      const assignments = await getResources("course_assignments");
+      const courses = await getResources("courses");
+
+      const course = courses.find((c) => c.unit_code === unitCode);
+
+      const assignment = assignments.filter(
+        (assignment) => assignment.unit_code === unitCode
+      );
+
+      const ans = await getResources("answered");
       res.status(200).json({
         message: "Assignment added successfully",
+        returnedAssignment,
         assignment,
+        course,
+        ans,
       });
     } catch (error) {
       console.log(error);
@@ -80,10 +93,24 @@ course_assignments_app.patch("/course_assignments/:id", async (req, res) => {
       `UPDATE course_assignments SET question = $1 WHERE id = $2 RETURNING*`,
       [question, parseInt(req.params.id, 10)]
     );
-    const assignment = result.rows[0];
+    const returnedAssignment = result.rows[0];
+    const assignments = await getResources("course_assignments");
+
+    const courses = await getResources("courses");
+
+    const course = courses.find((c) => c.unit_code === unitCode);
+
+    const assignment = assignments.filter(
+      (assignment) => assignment.unit_code === unitCode
+    );
+
+    const ans = await getResources("answered");
     res.status(200).json({
       message: "Assignment updated successfully",
+      returnedAssignment,
       assignment,
+      course,
+      ans,
     });
   } catch (error) {
     console.log(error);
@@ -97,10 +124,24 @@ course_assignments_app.delete("/course_assignments/:id", async (req, res) => {
       `DELETE FROM course_assignments WHERE id = $1 RETURNING*`,
       [parseInt(req.params.id, 10)]
     );
-    const assignment = result.rows[0];
+    const returnedAssignment = result.rows[0];
+    const assignments = await getResources("course_assignments");
+
+    const courses = await getResources("courses");
+
+    const course = courses.find((c) => c.unit_code === unitCode);
+
+    const assignment = assignments.filter(
+      (assignment) => assignment.unit_code === unitCode
+    );
+
+    const ans = await getResources("answered");
     res.status(200).json({
       message: "Assignment deleted successfully",
+      returnedAssignment,
       assignment,
+      course,
+      ans,
     });
   } catch (error) {
     console.log(error);
