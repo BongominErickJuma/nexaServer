@@ -79,6 +79,7 @@ const createTables = async () => {
             assignments_id INTEGER NOT NULL REFERENCES course_assignments(id), 
             unit_code VARCHAR(10) NOT NULL REFERENCES courses(unit_code),
             student_id INTEGER NOT NULL REFERENCES students(id), 
+            status VARCHAR(10),
             answer TEXT
         );
       `,
@@ -143,6 +144,7 @@ const createTables = async () => {
             student_id INTEGER NOT NULL REFERENCES students(id),
             exams_id INTEGER REFERENCES exams(id),
             assignments_id INTEGER REFERENCES course_assignments(id),
+            course_name VARCHAR(255),
             marks INTEGER NOT NULL
         );
       `,

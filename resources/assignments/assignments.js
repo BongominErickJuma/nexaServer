@@ -86,12 +86,14 @@ course_assignments_app.post(
 );
 
 course_assignments_app.patch("/course_assignments/:id", async (req, res) => {
-  const { question } = req.body;
+  const { question, unitCode } = req.body;
+
+  const updatedQuestion = question.question;
 
   try {
     const result = await db.query(
       `UPDATE course_assignments SET question = $1 WHERE id = $2 RETURNING*`,
-      [question, parseInt(req.params.id, 10)]
+      [updatedQuestion, parseInt(req.params.id, 10)]
     );
     const returnedAssignment = result.rows[0];
     const assignments = await getResources("course_assignments");
@@ -118,34 +120,39 @@ course_assignments_app.patch("/course_assignments/:id", async (req, res) => {
 });
 
 // Delete an assignment
-course_assignments_app.delete("/course_assignments/:id", async (req, res) => {
-  try {
-    const result = await db.query(
-      `DELETE FROM course_assignments WHERE id = $1 RETURNING*`,
-      [parseInt(req.params.id, 10)]
-    );
-    const returnedAssignment = result.rows[0];
-    const assignments = await getResources("course_assignments");
+course_assignments_app.delete(
+  "/course_assignments/:id/:unitCode",
+  async (req, res) => {
+    const unitCode = req.params.unitCode;
+    try {
+      const result = await db.query(
+        `DELETE FROM course_assignments WHERE id = $1 RETURNING*`,
+        [parseInt(req.params.id, 10)]
+      );
+      const returnedAssignment = result.rows[0];
+      const assignments = await getResources("course_assignments");
 
-    const courses = await getResources("courses");
+      const courses = await getResources("courses");
 
-    const course = courses.find((c) => c.unit_code === unitCode);
+      const course = courses.find((c) => c.unit_code === unitCode);
 
-    const assignment = assignments.filter(
-      (assignment) => assignment.unit_code === unitCode
-    );
+      const assignment = assignments.filter(
+        (assignment) => assignment.unit_code === unitCode
+      );
 
-    const ans = await getResources("answered");
-    res.status(200).json({
-      message: "Assignment deleted successfully",
-      returnedAssignment,
-      assignment,
-      course,
-      ans,
-    });
-  } catch (error) {
-    console.log(error);
+      const ans = await getResources("answered");
+
+      res.status(200).json({
+        message: "Assignment deleted successfully",
+        returnedAssignment,
+        assignment,
+        course,
+        ans,
+      });
+    } catch (error) {
+      console.log(error);
+    }
   }
-});
+);
 
 export default course_assignments_app;

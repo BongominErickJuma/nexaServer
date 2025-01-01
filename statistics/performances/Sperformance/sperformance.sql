@@ -4,10 +4,11 @@ CREATE TABLE performance (
     student_id INTEGER NOT NULL REFERENCES students(id),
     exams_id INTEGER REFERENCES exams(id),
     assignments_id INTEGER REFERENCES course_assignments(id),
+    course_name VARCHAR(255),
     marks INTEGER NOT NULL 
 );
 
-INSERT INTO performance (unit_code, student_id, exams_id, assignments_id, marks)
+INSERT INTO performance (unit_code, student_id, exams_id, assignments_id, course_name, marks)
 VALUES
 ('CENG101', 23, null, 2, 75),
 ('CENG101', 23, null, 3, 90),

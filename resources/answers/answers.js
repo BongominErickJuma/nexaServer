@@ -48,9 +48,23 @@ answers_app.post("/answers/:unitCode/:questionId", async (req, res) => {
         [student_id, questionId, "ans"]
       );
     }
+
+    const assignments = await getResources("course_assignments");
+    const courses = await getResources("courses");
+    const ans = await getResources("answered");
+
+    const course = courses.find((c) => c.unit_code === unitCode);
+
+    const assignment = assignments.filter(
+      (assignment) => assignment.unit_code === unitCode
+    );
+
     res.status(200).json({
       message: "New answer added successfully",
       insertedAnswer,
+      assignment,
+      course,
+      ans,
     });
   } catch (error) {
     console.log(error);
@@ -60,18 +74,37 @@ answers_app.post("/answers/:unitCode/:questionId", async (req, res) => {
 // Update a specific answer for a specific course question
 answers_app.patch("/answers/:answerId", async (req, res) => {
   const { answerId } = req.params;
-  const { answer } = req.body;
+  const { answer, unitCode } = req.body;
+  const updatedAnswer = answer.answer;
+
   try {
-    if (answer) {
+    if (updatedAnswer) {
       const result = await db.query(
         `UPDATE assignment_answers SET answer = $1 WHERE id = $2 RETURNING*`,
-        [answer, parseInt(answerId, 10)]
+        [updatedAnswer, parseInt(answerId, 10)]
       );
       const insertedAnswer = result.rows[0];
+
+      const assignmentAnswers = await getResources("assignment_answers");
+      const assignments = await getResources("course_assignments");
+      const courses = await getResources("courses");
+
+      const course = courses.find((c) => c.unit_code === unitCode);
+
+      const questions = assignments.filter(
+        (assignment) => assignment.unit_code === unitCode
+      );
+
+      const answers = assignmentAnswers.filter(
+        (aa) => aa.unit_code === unitCode
+      );
 
       res.status(200).json({
         message: "Answer updated successfully",
         insertedAnswer,
+        questions,
+        answers,
+        course,
       });
     } else {
       const result = await db.query(
@@ -80,9 +113,26 @@ answers_app.patch("/answers/:answerId", async (req, res) => {
       );
       const insertedAnswer = result.rows[0];
 
+      const assignmentAnswers = await getResources("assignment_answers");
+      const assignments = await getResources("course_assignments");
+      const courses = await getResources("courses");
+
+      const course = courses.find((c) => c.unit_code === unitCode);
+
+      const questions = assignments.filter(
+        (assignment) => assignment.unit_code === unitCode
+      );
+
+      const answers = assignmentAnswers.filter(
+        (aa) => aa.unit_code === unitCode
+      );
+
       res.status(200).json({
         message: "Answer updated successfully",
         insertedAnswer,
+        questions,
+        answers,
+        course,
       });
     }
   } catch (error) {

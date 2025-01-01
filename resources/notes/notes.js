@@ -109,6 +109,7 @@ notes_app.post("/notes/:subject_id", async (req, res) => {
 
     const teachers = await getResources("teachers");
     const teacher = teachers.find((tr) => tr.id === course.teacher_id);
+
     res.status(200).json({
       message: "Note added successfully",
       note,
@@ -140,7 +141,7 @@ notes_app.patch("/notes/:id", async (req, res) => {
     );
 
     // Convert chapterNumber to a number for comparison
-    const chapter = notes.find(
+    const chapter = notes.find( 
       (chap) => chap.chapter === parseInt(chapterNumber, 10)
     );
 
