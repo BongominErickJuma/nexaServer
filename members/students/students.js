@@ -38,7 +38,6 @@ students_app.get("/students/:id", async (req, res) => {
 // add a new student
 students_app.post("/students", async (req, res) => {
   const { name, email, phone, role, password, image } = req.body;
-  console.log(req.body);
   const hashedPassword = await bcrypt.hash(password, saltRounds);
   try {
     const students = await getResources("students");
@@ -53,10 +52,13 @@ students_app.post("/students", async (req, res) => {
       "INSERT INTO students(name, email, phone, image, password, role) VALUES ($1, $2, $3, $4, $5, $6) RETURNING*",
       [name, email, phone, image, hashedPassword, role]
     );
+
     const student = result.rows[0];
+    const allStudents = await getResources("students");
     // teachers.push(teacher);
     res.status(200).json({
       message: "student added successfully",
+      students: allStudents,
       student,
     });
   } catch (error) {
@@ -75,8 +77,10 @@ students_app.patch("/students/:id", async (req, res) => {
       [name, email, phone, image, id]
     );
     const student = result.rows[0];
+    const allStudents = await getResources("students");
     res.status(200).json({
       message: "student Updated successfully",
+      students: allStudents,
       student,
     });
   } catch (error) {
@@ -95,8 +99,10 @@ students_app.delete("/students/:id", async (req, res) => {
       [id]
     );
     const student = result.rows[0];
+    const allStudents = await getResources("students");
     res.status(200).json({
       message: "student Deleted successfully",
+      students: allStudents,
       student,
     });
   } catch (error) {

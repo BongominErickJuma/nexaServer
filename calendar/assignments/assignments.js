@@ -44,9 +44,13 @@ assignments_app.post("/assignments", async (req, res) => {
       [unit_code, duedate, location, description]
     );
     const assignment_timetable = result.rows[0];
+    const assignments = await getResources("assignment_timetable");
+    const courses = await getResources("courses");
     res.status(200).json({
       message: "exam added successfully",
       assignment_timetable,
+      assignments,
+      courses,
     });
   } catch (error) {
     console.log(error);
@@ -64,9 +68,13 @@ assignments_app.patch("/assignments/:id", async (req, res) => {
       [duedate, location, description, id]
     );
     const assignment_timetable = result.rows[0];
+    const assignments = await getResources("assignment_timetable");
+    const courses = await getResources("courses");
     res.status(200).json({
       message: "exam Updated successfully",
       assignment_timetable,
+      assignments,
+      courses,
     });
   } catch (error) {
     console.log(error);
@@ -82,9 +90,13 @@ assignments_app.delete("/assignments/:id", async (req, res) => {
       [parseInt(req.params.id, 10)]
     );
     const assignment_timetable = result.rows[0];
+    const assignments = await getResources("assignment_timetable");
+    const courses = await getResources("courses");
     res.status(200).json({
       message: "assignment_timetable deleted successfully",
       assignment_timetable,
+      courses,
+      assignments,
     });
   } catch (error) {
     console.log(error);

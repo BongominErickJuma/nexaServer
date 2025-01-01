@@ -40,10 +40,12 @@ meetings_app.post("/meetings", async (req, res) => {
       `INSERT INTO meetings (title, date, start_time, duration, location, description) VALUES($1, $2, $3, $4, $5, $6) RETURNING*`,
       [title, date, start_time, duration, location, description]
     );
-    const meetings = result.rows[0];
+    const Addedmeetings = result.rows[0];
+    const meetings = await getResources("meetings");
     res.status(200).json({
       message: "meeting added successfully",
       meetings,
+      Addedmeetings,
     });
   } catch (error) {
     console.log(error);
@@ -60,10 +62,12 @@ meetings_app.patch("/meetings/:id", async (req, res) => {
       `UPDATE meetings SET title = $1, date = $2, start_time = $3, duration = $4, location = $5, description = $6 WHERE id = $7 RETURNING*`,
       [title, date, start_time, duration, location, description, id]
     );
-    const meetings = result.rows[0];
+    const Addedmeetings = result.rows[0];
+    const meetings = await getResources("meetings");
     res.status(200).json({
       message: "meeting Updated successfully",
       meetings,
+      Addedmeetings,
     });
   } catch (error) {
     console.log(error);
@@ -78,10 +82,12 @@ meetings_app.delete("/meetings/:id", async (req, res) => {
       `DELETE FROM meetings WHERE id = $1 RETURNING*`,
       [parseInt(req.params.id, 10)]
     );
-    const meetings = result.rows[0];
+    const Addedmeetings = result.rows[0];
+    const meetings = await getResources("meetings");
     res.status(200).json({
       message: "meetings deleted successfully",
       meetings,
+      Addedmeetings,
     });
   } catch (error) {
     console.log(error);

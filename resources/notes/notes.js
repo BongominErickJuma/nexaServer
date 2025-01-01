@@ -100,9 +100,20 @@ notes_app.post("/notes/:subject_id", async (req, res) => {
       [course_units, nextChapterNumber, title, content]
     );
     const note = result.rows[0];
+
+    const courses = await getResources("courses");
+    const course = courses.find(
+      (course) => course.unit_code === req.params.unitCode
+    );
+
+    const teachers = await getResources("teachers");
+    const teacher = teachers.find((tr) => tr.id === course.teacher_id);
     res.status(200).json({
       message: "Note added successfully",
       note,
+      course,
+      teachers,
+      teacher,
     });
   } catch (error) {
     console.log(error);
@@ -120,10 +131,16 @@ notes_app.patch("/notes/:id", async (req, res) => {
       [title, content, parseInt(id, 10)]
     );
     const note = result.rows[0];
+    const allCourseNotes = await getResources("course_notes");
+    // Filter notes that match the subject_id
+    const notes = allCourseNotes.filter(
+      (note) => note.subject_id === req.params.subject_id
+    );
 
     res.status(200).json({
       message: "Note updated successfully",
       note,
+      notes,
     });
   } catch (error) {
     console.log(error);
@@ -139,9 +156,15 @@ notes_app.delete("/notes/:id", async (req, res) => {
       [parseInt(id, 10)]
     );
     const note = result.rows[0];
+    const allCourseNotes = await getResources("course_notes");
+    // Filter notes that match the subject_id
+    const notes = allCourseNotes.filter(
+      (note) => note.subject_id === req.params.subject_id
+    );
     res.status(200).json({
       message: "Note Deleted successfully",
       note,
+      notes,
     });
   } catch (error) {
     console.log(error);

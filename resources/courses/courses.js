@@ -78,9 +78,13 @@ course_app.post("/courses", async (req, res) => {
       ]
     );
     const course = result.rows[0];
+    const allCourses = await getResources("courses");
+    const teachers = await getResources("teachers");
     res.status(200).json({
       message: "Course added successfully",
       course,
+      courses: allCourses,
+      teachers,
     });
   } catch (error) {
     console.log(error);
@@ -120,9 +124,13 @@ course_app.patch("/courses/:unitCode", async (req, res) => {
       ]
     );
     const course = result.rows[0];
+    const teachers = await getResources("teachers");
+    const teacher = teachers.find((tr) => tr.id === course.teacher_id);
     res.status(200).json({
       message: "Course Updated successfully",
       course,
+      teachers,
+      teacher,
     });
   } catch (error) {
     console.log(error);
@@ -138,9 +146,13 @@ course_app.delete("/courses/:unitCode", async (req, res) => {
       [id]
     );
     const course = result.rows[0];
+    const teachers = await getResources("teachers");
+    const teacher = teachers.find((tr) => tr.id === course.teacher_id);
     res.status(200).json({
       message: "courses Deleted successfully",
       course,
+      teacher,
+      teachers,
     });
   } catch (error) {
     console.log(error);

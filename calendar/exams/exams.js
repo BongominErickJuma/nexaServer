@@ -43,10 +43,14 @@ exams_app.post("/exams", async (req, res) => {
       `INSERT INTO exams (unit_code, date, start_time, duration, location) VALUES($1, $2, $3, $4, $5) RETURNING*`,
       [unit_code, date, start_time, duration, location]
     );
-    const exams = result.rows[0];
+    const Addedexams = result.rows[0];
+    const exams = await getResources("exams");
+    const courses = await getResources("courses");
     res.status(200).json({
       message: "exam added successfully",
       exams,
+      courses,
+      Addedexams,
     });
   } catch (error) {
     console.log(error);
@@ -63,10 +67,14 @@ exams_app.patch("/exams/:id", async (req, res) => {
       `UPDATE exams SET date = $1, start_time = $2, duration = $3, location = $4 WHERE id = $5 RETURNING*`,
       [date, start_time, duration, location, id]
     );
-    const exams = result.rows[0];
+    const Addedexams = result.rows[0];
+    const exams = await getResources("exams");
+    const courses = await getResources("courses");
     res.status(200).json({
       message: "exam Updated successfully",
       exams,
+      courses,
+      Addedexams,
     });
   } catch (error) {
     console.log(error);
@@ -81,10 +89,14 @@ exams_app.delete("/exams/:id", async (req, res) => {
       `DELETE FROM exams WHERE id = $1 RETURNING*`,
       [parseInt(req.params.id, 10)]
     );
-    const exams = result.rows[0];
+    const Addedexams = result.rows[0];
+    const exams = await getResources("exams");
+    const courses = await getResources("courses");
     res.status(200).json({
       message: "exams deleted successfully",
       exams,
+      courses,
+      Addedexams,
     });
   } catch (error) {
     console.log(error);

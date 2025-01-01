@@ -55,10 +55,12 @@ teachers_app.post("/teachers", async (req, res) => {
       [name, email, phone, image, hashedPassword, role]
     );
     const teacher = result.rows[0];
+    const allTeachers = await getResources("teachers");
     // teachers.push(teacher);
     res.status(200).json({
       message: "teacher added successfully",
       teacher,
+      teachers: allTeachers,
     });
   } catch (error) {
     console.log(error);
@@ -76,9 +78,11 @@ teachers_app.patch("/teachers/:id", async (req, res) => {
       [name, email, phone, role, image, id]
     );
     const teacher = result.rows[0];
+    const allTeachers = await getResources("teachers");
     res.status(200).json({
       message: "teacher Updated successfully",
       teacher,
+      teachers: allTeachers,
     });
   } catch (error) {
     console.log(error);
@@ -96,9 +100,11 @@ teachers_app.delete("/teachers/:id", async (req, res) => {
       [id]
     );
     const teacher = result.rows[0];
+    const allTeachers = await getResources("teachers");
     res.status(200).json({
       message: "teacher Deleted successfully",
       teacher,
+      teachers: allTeachers,
     });
   } catch (error) {
     console.log(error);
