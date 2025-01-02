@@ -35,6 +35,7 @@ course_app.get("/courses/:unitCode", async (req, res) => {
     });
   }
   const teacher = teachers.find((tr) => tr.id === course.teacher_id);
+
   res.status(200).json({ course, teacher, teachers });
 });
 

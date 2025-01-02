@@ -67,18 +67,8 @@ notes_app.get("/notes/:subject_id/:chapterNumber", async (req, res) => {
 
 // Add a new note (chapter) to a specific course by subject_id
 notes_app.post("/notes/:subject_id", async (req, res) => {
-  const courses = await getResources("courses");
   const courseNotes = await getResources("course_notes");
-  // Filter notes that match the subject_id
-  const course = courses.filter(
-    (course) => course.unit_code === req.params.subject_id
-  );
 
-  if (!(course.length > 0)) {
-    return res.status(404).json({
-      message: `Course with unit code ${req.params.subject_id} not found`,
-    });
-  }
   let nextChapterNumber = 1;
 
   const notes = courseNotes.filter(
@@ -94,21 +84,21 @@ notes_app.post("/notes/:subject_id", async (req, res) => {
 
   const { title, content } = req.body;
 
+  const courses = await getResources("courses");
+
+  const course = courses.find(
+    (course) => course.unit_code === req.params.subject_id
+  );
+
+  const teachers = await getResources("teachers");
+  const teacher = teachers.find((tr) => tr.id === course.teacher_id);
+
   try {
     const result = await db.query(
       "INSERT INTO course_notes(subject_id, chapter, title, content) VALUES ($1, $2, $3, $4) RETURNING*",
       [course_units, nextChapterNumber, title, content]
     );
     const note = result.rows[0];
-
-    const courses = await getResources("courses");
-
-    const course = courses.find(
-      (course) => course.unit_code === req.params.unitCode
-    );
-
-    const teachers = await getResources("teachers");
-    const teacher = teachers.find((tr) => tr.id === course.teacher_id);
 
     res.status(200).json({
       message: "Note added successfully",
@@ -123,8 +113,8 @@ notes_app.post("/notes/:subject_id", async (req, res) => {
 });
 
 // Update a specific note (chapter) for a course by subject_id and chapter number
-notes_app.patch("/notes/:id", async (req, res) => {
-  const { id } = req.params;
+notes_app.patch("/notes/:id/:chapterNumber/:subject_id", async (req, res) => {
+  const { id, chapterNumber, subject_id } = req.params;
   const { title, content } = req.body;
 
   try {
@@ -137,19 +127,13 @@ notes_app.patch("/notes/:id", async (req, res) => {
     const allCourseNotes = await getResources("course_notes");
     // Filter notes that match the subject_id
     const notes = allCourseNotes.filter(
-      (note) => note.subject_id === req.params.subject_id
+      (note) => note.subject_id === subject_id
     );
 
     // Convert chapterNumber to a number for comparison
-    const chapter = notes.find( 
+    const chapter = notes.find(
       (chap) => chap.chapter === parseInt(chapterNumber, 10)
     );
-
-    if (!chapter) {
-      return res.status(404).json({
-        message: `Chapter ${chapterNumber} not found for course with subject id ${subject_id}`,
-      });
-    }
 
     res.status(200).json({
       message: "Note updated successfully",
