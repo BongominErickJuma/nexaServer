@@ -19,8 +19,8 @@ import answered_app from "./statistics/answered/answered.js";
 import password_app from "./updates/passwords.js";
 import images_app from "./updates/images.js";
 // import dropTables from "./database/dropTables.js";
-import createTables from "./database/createTables.js";
-// import createAdmin from "./database/createAdmin.js";
+// import createTables from "./database/createTables.js";
+import createAdmin from "./database/createAdmin.js";
 
 // configure express
 const app = express();
@@ -38,10 +38,10 @@ app.use(
 // dropTables();
 
 // Table Creation
-createTables();
+// createTables();
 
 // Admin Creation
-// createAdmin();
+createAdmin();
 
 // stats
 
